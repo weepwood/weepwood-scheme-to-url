@@ -14,7 +14,10 @@
         // 通过 URL Scheme 转换 HTTP 网页链接
         // http://127.0.0.1:5500/weepwood-scheme-to-url.html#obsidian://open?vault=Obsidian%20Vault&file=%E6%B5%8B%E8%AF%95
         const scheme = window.location.hash.substring(1);
-        window.location.replace(scheme);
+        console.log(scheme);
+        if (scheme) {
+            window.location.replace(scheme);
+        }
     </script>
 </body>
 
