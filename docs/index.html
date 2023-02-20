@@ -60,16 +60,26 @@
 
     <script>
       // 通过 URL Scheme 转换 HTTP 网页链接
-      const scheme = window.location.hash.substring(1);
-      let hash = document.getElementById("hash");
-      if (scheme) {
-        window.location.replace(scheme);
-        hash.innerHTML = `URL Scheme Link: <a href=${scheme}>${decodeURIComponent(
-          scheme
-        )}</a>`;
-      } else {
-        hash.innerHTML = `URL Scheme Link: NONE`;
+      let scheme = window.location.hash.substring(1);
+      toScheme(scheme);
+
+      function toScheme(scheme) {
+        let hash = document.getElementById("hash");
+        if (scheme) {
+          window.location.replace(scheme);
+          hash.innerHTML = `URL Scheme Link: <a href=${scheme}>${decodeURIComponent(
+            scheme
+          )}</a>`;
+        } else {
+          hash.innerHTML = `URL Scheme Link: NONE`;
+        }
       }
+
+      // 监听 url 中 hash 变化
+      window.addEventListener("hashchange", function (event) {
+        scheme = window.location.hash.substring(1);
+        toScheme(scheme);
+      });
     </script>
   </body>
 </html>
