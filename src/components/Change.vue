@@ -1,7 +1,7 @@
 <template>
   <div class="box">
     <!--  标题和创建链接卡片  -->
-    <div class="card">
+    <div id="operate-card" class="card" :style="styles">
       <div class="title">
         <span @click="isShowHistory = !isShowHistory">
           {{ isShowHistory ? "HISTORY" : title }}
@@ -10,19 +10,25 @@
 
       <div v-if="!showCloseMsg">
         <div v-if="!isShowHistory">
-          <input id="url" v-model="url" placeholder="需要跳转的地址"/>
-          <button id="copy"  class="wd-button" @:click="copy">{{ copyText }}</button>
-          <div class="hash">
-            Link:
-            <span
-                class="link"
-                @click="changeUrl(toUrl)"
-                :class="{ none: !toUrl }"
-            >
-            {{ toUrl ? decodeURIComponent(toUrl) : "None" }}
+          <!-- 输入框 -->
+          <input id="url" ref="urlInput" v-model="url" placeholder="需要跳转的地址" @keydown.enter="copy"/>
+          <!-- 复制按钮 -->
+          <button id="copy" class="wd-button" @:click="copy">{{ copyText }}</button>
+          <!-- 展示链接 -->
+          <div class="hash" v-if="url">
+            <span class="link" @click="gotoUrl(toUrl)">
+            {{ decodeURIComponent(toUrl) }}
           </span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div id="copied-card">
+      <div class="card" v-for="(item) in urlList" :key="item" v-if="!isShowHistory">
+      <span class="link" @click="gotoUrl(item)">
+           {{ decodeURIComponent(item) }}
+          </span>
       </div>
     </div>
     <!-- 链接跳转后提示信息卡片  -->
@@ -33,7 +39,8 @@
       <a class="link" @click="changeUrl(origin)">{{ origin }}</a>
     </div>
     <!-- 本地历史记录卡片 -->
-    <div class="card history" v-if="isShowHistory">
+    <div class="card" id="history" v-if="isShowHistory">
+
       <div v-for="item in history" :key="item.scheme" class="item">
         <div class="link">
           <span
@@ -49,9 +56,11 @@
           {{ formatDate(item.recently).info }}
         </span>
       </div>
-      <button id="invalid-button" class="wd-button"  @:click="invalidHistory">清空记录</button>
-    </div>
 
+      <button id="invalid-button" class="wd-button" @:click="invalidHistory">清空记录</button>
+      <span>所有记录均存放在本地，源代码地址：<a
+          href="https://github.com/weepwood/weepwood-scheme-to-url">GitHub</a></span>
+    </div>
   </div>
 
   <!-- <div>hello - {{ time }}</div> -->
@@ -66,6 +75,7 @@ export default {
     return {
       time: Date.now(),
       url: "",
+      urlList: [],
       // 从 hash 中获取到需要跳转的 URL
       toUrl: window.location.hash.substring(1),
       isShowLink: false,
@@ -78,6 +88,7 @@ export default {
       showCloseMsg: false,
       origin: window.location.origin,
       title: "HELLO",
+      topFlag: false,
     };
   },
 
@@ -87,6 +98,10 @@ export default {
     this.changeUrl(this.toUrl);
     this.history = JSON.parse(localStorage.getItem("scheme_history"));
     this.history = this.sortByTime(this.history);
+    // 输入框自动获取焦点
+    this.$nextTick(() => {
+      this.$refs.urlInput.focus()
+    })
   },
   methods: {
     // 跳转到对应 URL
@@ -109,8 +124,14 @@ export default {
         }, 5000);
       }
     },
+    // 展示链接跳转并复制
+    gotoUrl(url) {
+      navigator.clipboard.writeText(url)
+      window.open(url)
+    },
+
     // 历史记录链接跳转并复制
-    toHistoryUrl(url){
+    toHistoryUrl(url) {
       navigator.clipboard.writeText(window.location.origin + "/#" + url)
       window.open(url)
     },
@@ -144,7 +165,7 @@ export default {
       }
     },
     // 清空历史记录
-    invalidHistory(){
+    invalidHistory() {
       localStorage.clear();
       location.reload();
     },
@@ -206,6 +227,10 @@ export default {
     copy() {
       navigator.clipboard.writeText(this.copyUrl).then(() => {
         this.copyText = "Success";
+        // 将 url 内容保存到 url List 中
+        this.urlList.unshift(window.location.origin + "/#" + this.url)
+        // 清空 url 内容
+        this.url = '';
         setTimeout(() => {
           this.copyText = "Copy";
         }, 1000);
@@ -213,8 +238,7 @@ export default {
     },
   },
   watch: {
-    $route: function (to, from) {
-      // console.log("URL 变化了:", to, from);
+    $route: function (to) {
       this.toUrl = to.hash.substring(1);
       this.changeUrl(this.toUrl);
     },
@@ -225,17 +249,31 @@ export default {
       this.copyUrl = window.location.origin + "/#" + this.url;
       return this.copyUrl;
     },
+    styles() {
+      if (this.topFlag === true || this.url !== '') {
+        this.topFlag = true;
+        return {
+          marginTop: 20 + 'px'
+        }
+      }
+    }
   },
 };
 </script>
 
 <style scoped>
 .box {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
+
+
+/* 垂直居中 */
+#operate-card {
+  margin-top: calc((100vh - 135px) * 0.5);
+}
+
 
 .card {
   background-color: #333333;
@@ -282,17 +320,12 @@ export default {
   cursor: pointer;
 }
 
-.none {
-  color: inherit;
-  text-decoration: none;
-  cursor: inherit;
-}
-
-.history .item {
+.item {
   display: grid;
   grid-template-columns: 60% 10% 30%;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
+
 
 #url {
   background: #fff;
@@ -312,7 +345,8 @@ export default {
   outline: none;
 }
 
-.wd-button{
+
+.wd-button {
   background: #6c94b8;
   color: white;
   border: 1px solid #6c94b8;
@@ -326,12 +360,15 @@ export default {
   font-size: 16px;
 }
 
-#invalid-button{
+#invalid-button {
   margin: auto;
+  margin-right: 10px;
 }
 
 .closeMsg {
   line-height: 25px;
   cursor: pointer;
 }
+
+
 </style>
