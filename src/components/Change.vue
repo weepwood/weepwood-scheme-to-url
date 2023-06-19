@@ -3,15 +3,29 @@
     <div class="card">
       <div class="title">
         <span @click="isShowHistory = !isShowHistory">
-          {{ isShowHistory ? "HISTORY" : "HELLO" }}
+          {{ isShowHistory ? "HISTORY" : title }}
         </span>
       </div>
-      <div class="hash" v-if="!isShowHistory">
-        Link:
-        <span class="link" @click="changeUrl(toUrl)" :class="{ none: !toUrl }">
-          {{ toUrl ? decodeURIComponent(toUrl) : "None" }}
-        </span>
+      <div v-if="!showCloseMsg">
+        <input id="url" v-model="url" placeholder="需要跳转的地址" />
+        <button id="copy" @:click="copy">{{ copyText }}</button>
+        <div class="hash" v-if="!isShowHistory">
+          Link:
+          <span
+            class="link"
+            @click="changeUrl(toUrl)"
+            :class="{ none: !toUrl }"
+          >
+            {{ toUrl ? decodeURIComponent(toUrl) : "None" }}
+          </span>
+        </div>
       </div>
+    </div>
+    <div class="card closeMsg" v-show="showCloseMsg">
+      <span> {{ "本页面将在 " + countDown + " 秒后自动关闭" }}</span>
+      <br />
+      <span> 需要创建链接请访问 </span>
+      <a class="link" @click="changeUrl(origin)">{{ origin }}</a>
     </div>
     <div class="card history" v-if="isShowHistory">
       <div v-for="item in history" :key="item.scheme" class="item">
@@ -43,12 +57,19 @@ export default {
   data() {
     return {
       time: Date.now(),
+      url: "",
       // 从 hash 中获取到需要跳转的 URL
       toUrl: window.location.hash.substring(1),
       isShowLink: false,
       isShowHistory: false,
       history: {},
       msg: "",
+      copyUrl: "",
+      copyText: "Copy",
+      countDown: "5",
+      showCloseMsg: false,
+      origin: window.location.origin,
+      title: "HELLO",
     };
   },
 
@@ -65,6 +86,19 @@ export default {
         window.location.replace(url);
         this.updateHistory(url);
         this.isShow = true;
+      }
+      if (window.location.hash.substring(1)) {
+        this.showCloseMsg = true;
+        this.title = "GOTO";
+        // 关闭信息
+        for (let i = 0; i < 5; i++) {
+          setTimeout(() => {
+            this.countDown = 5 - i;
+          }, i * 1000);
+        }
+        setTimeout(() => {
+          window.close();
+        }, 5000);
       }
     },
     // 更新历史记录
@@ -150,12 +184,27 @@ export default {
       }
       return history;
     },
+    copy() {
+      navigator.clipboard.writeText(this.copyUrl).then(() => {
+        this.copyText = "Success";
+        setTimeout(() => {
+          this.copyText = "Copy";
+        }, 1000);
+      });
+    },
   },
   watch: {
     $route: function (to, from) {
       // console.log("URL 变化了:", to, from);
       this.toUrl = to.hash.substring(1);
       this.changeUrl(this.toUrl);
+    },
+  },
+  computed: {
+    toUrl() {
+      console.log(window.location);
+      this.copyUrl = window.location.origin + "/#" + this.url;
+      return this.copyUrl;
     },
   },
 };
@@ -210,6 +259,7 @@ export default {
   display: inline;
   color: #6c94b8;
   text-decoration: underline;
+  cursor: pointer;
 }
 
 .none {
@@ -222,5 +272,42 @@ export default {
   display: grid;
   grid-template-columns: 60% 10% 30%;
   margin-bottom: 10px;
+}
+
+#url {
+  background: #fff;
+  border: 2px solid #dfe1e5;
+  box-shadow: none;
+  border-radius: 4px;
+  margin-top: 25px;
+  padding: 6px 15px;
+  font-size: 16px;
+  line-height: 16px;
+  width: 65%;
+  transform: translateX(-5px);
+}
+
+#url:focus {
+  border-color: #6c94b8;
+  outline: none;
+}
+
+#copy {
+  background: #6c94b8;
+  color: white;
+  border: 1px solid #6c94b8;
+  width: 25%;
+  box-shadow: none;
+  margin-left: 3%;
+  padding: 8px 24px;
+  border-radius: 4px;
+  height: auto;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.closeMsg {
+  line-height: 25px;
+  cursor: pointer;
 }
 </style>
