@@ -7,23 +7,25 @@
         </span>
       </div>
       <div v-if="!showCloseMsg">
-        <input id="url" v-model="url" placeholder="需要跳转的地址" />
-        <button id="copy" @:click="copy">{{ copyText }}</button>
-        <div class="hash" v-if="!isShowHistory">
-          Link:
-          <span
-            class="link"
-            @click="changeUrl(toUrl)"
-            :class="{ none: !toUrl }"
-          >
+        <div v-if="!isShowHistory">
+          <input id="url" v-model="url" placeholder="需要跳转的地址"/>
+          <button id="copy" @:click="copy">{{ copyText }}</button>
+          <div class="hash">
+            Link:
+            <span
+                class="link"
+                @click="changeUrl(toUrl)"
+                :class="{ none: !toUrl }"
+            >
             {{ toUrl ? decodeURIComponent(toUrl) : "None" }}
           </span>
+          </div>
         </div>
       </div>
     </div>
     <div class="card closeMsg" v-show="showCloseMsg">
       <span> {{ "本页面将在 " + countDown + " 秒后自动关闭" }}</span>
-      <br />
+      <br/>
       <span> 需要创建链接请访问 </span>
       <a class="link" @click="changeUrl(origin)">{{ origin }}</a>
     </div>
@@ -31,9 +33,9 @@
       <div v-for="item in history" :key="item.scheme" class="item">
         <div class="link">
           <span
-            style="cursor: pointer"
-            :title="decodeURIComponent(item.scheme)"
-            @click="changeUrl(item.scheme)"
+              style="cursor: pointer"
+              :title="decodeURIComponent(item.scheme)"
+              @click="changeUrl(item.scheme)"
           >
             {{ truncateString(decodeURIComponent(item.scheme), 30) }}
           </span>
@@ -73,7 +75,8 @@ export default {
     };
   },
 
-  created() {},
+  created() {
+  },
   mounted() {
     this.changeUrl(this.toUrl);
     this.history = JSON.parse(localStorage.getItem("scheme_history"));
@@ -115,11 +118,11 @@ export default {
         localStorage.setItem("scheme_history", JSON.stringify([scheme_info]));
       } else {
         let scheme_index = scheme_history.findIndex(
-          (obj) => obj.scheme === scheme
+            (obj) => obj.scheme === scheme
         );
         if (scheme_index === -1) {
           // 历史记录不存在 scheme 对象，则创建新对象并添加到数组中
-          scheme_history.push({ scheme: scheme, count: 1, recently: time });
+          scheme_history.push({scheme: scheme, count: 1, recently: time});
         } else {
           // 更新历史记录
           scheme_history[scheme_index].count++;
@@ -139,6 +142,7 @@ export default {
           return number;
         }
       }
+
       const date = new Date(timestamp);
       const now = new Date();
 
@@ -217,6 +221,7 @@ export default {
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
 .card {
   background-color: #333333;
   color: #f2f2f2;
