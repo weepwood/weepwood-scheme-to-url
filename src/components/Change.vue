@@ -1,15 +1,17 @@
 <template>
   <div class="box">
+    <!--  标题和创建链接卡片  -->
     <div class="card">
       <div class="title">
         <span @click="isShowHistory = !isShowHistory">
           {{ isShowHistory ? "HISTORY" : title }}
         </span>
       </div>
+
       <div v-if="!showCloseMsg">
         <div v-if="!isShowHistory">
           <input id="url" v-model="url" placeholder="需要跳转的地址"/>
-          <button id="copy" @:click="copy">{{ copyText }}</button>
+          <button id="copy"  class="wd-button" @:click="copy">{{ copyText }}</button>
           <div class="hash">
             Link:
             <span
@@ -23,19 +25,21 @@
         </div>
       </div>
     </div>
+    <!-- 链接跳转后提示信息卡片  -->
     <div class="card closeMsg" v-show="showCloseMsg">
       <span> {{ "本页面将在 " + countDown + " 秒后自动关闭" }}</span>
       <br/>
       <span> 需要创建链接请访问 </span>
       <a class="link" @click="changeUrl(origin)">{{ origin }}</a>
     </div>
+    <!-- 本地历史记录卡片 -->
     <div class="card history" v-if="isShowHistory">
       <div v-for="item in history" :key="item.scheme" class="item">
         <div class="link">
           <span
               style="cursor: pointer"
               :title="decodeURIComponent(item.scheme)"
-              @click="changeUrl(item.scheme)"
+              @click="toHistoryUrl(item.scheme)"
           >
             {{ truncateString(decodeURIComponent(item.scheme), 30) }}
           </span>
@@ -45,7 +49,9 @@
           {{ formatDate(item.recently).info }}
         </span>
       </div>
+      <button id="invalid-button" class="wd-button"  @:click="invalidHistory">清空记录</button>
     </div>
+
   </div>
 
   <!-- <div>hello - {{ time }}</div> -->
@@ -88,7 +94,6 @@ export default {
       if (url) {
         window.location.replace(url);
         this.updateHistory(url);
-        this.isShow = true;
       }
       if (window.location.hash.substring(1)) {
         this.showCloseMsg = true;
@@ -103,6 +108,11 @@ export default {
           window.close();
         }, 5000);
       }
+    },
+    // 历史记录链接跳转并复制
+    toHistoryUrl(url){
+      navigator.clipboard.writeText(window.location.origin + "/#" + url)
+      window.open(url)
     },
     // 更新历史记录
     updateHistory(scheme) {
@@ -132,6 +142,11 @@ export default {
         // 保存到 localStorage
         localStorage.setItem("scheme_history", JSON.stringify(scheme_history));
       }
+    },
+    // 清空历史记录
+    invalidHistory(){
+      localStorage.clear();
+      location.reload();
     },
     // 时间格式化
     formatDate(timestamp) {
@@ -297,7 +312,7 @@ export default {
   outline: none;
 }
 
-#copy {
+.wd-button{
   background: #6c94b8;
   color: white;
   border: 1px solid #6c94b8;
@@ -309,6 +324,10 @@ export default {
   height: auto;
   cursor: pointer;
   font-size: 16px;
+}
+
+#invalid-button{
+  margin: auto;
 }
 
 .closeMsg {
